@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Disease Prediction (Enhanced Accuracy)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #eef2f7;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 750px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #2c3e50;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease-in-out forwards;
+    }
+
+    .modal.show {
+      display: block;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      position: relative;
+      opacity: 0;
+      transform: translateY(-20px);
+      animation: slideIn 0.4s forwards ease-out;
+    }
+
+    .close {
+      color: #aaa;
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    .modal h4 {
+      margin-top: 0;
+    }
+
+    @keyframes fadeIn {
+      from { background-color: rgba(0, 0, 0, 0); }
+      to { background-color: rgba(0, 0, 0, 0.4); }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>AI Disease Prediction System</h2>
+  <form id="predictForm">
+    <div class="form-group"><label>Age</label><input type="number" name="age" required></div>
+    <div class="form-group"><label>Gender</label>
+      <select name="gender">
+        <option value="m">Male</option>
+        <option value="f">Female</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Blood Pressure</label><input type="number" name="blood_pressure" required></div>
+    <div class="form-group"><label>Cholesterol</label><input type="number" name="cholesterol" required></div>
+    <div class="form-group"><label>Glucose</label><input type="number" name="glucose" required></div>
+    <div class="form-group"><label>BMI</label><input type="number" step="0.1" name="bmi" required></div>
+    <div class="form-group"><label>Smoking</label>
+      <select name="smoking">
+        <option value="no">No</option>
+        <option value="yes">Yes</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Family History</label>
+      <select name="family_history">
+        <option value="no">No</option>
+        <option value="yes">Yes</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Physical Activity</label>
+      <select name="physical_activity">
+        <option value="low">Low</option>
+        <option value="moderate">Moderate</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+
+    <button type="submit">Predict</button>
+  </form>
+</div>
+
+<!-- Modal -->
+<div id="infoModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const diseaseInfo = {
+  'Heart Disease': {
+    Symptoms: 'Chest pain, shortness of breath, fatigue.',
+    Causes: 'High blood pressure, cholesterol, smoking.',
+    Treatment: 'Lifestyle changes, medication, surgery.'
+  },
+  'Diabetes': {
+    Symptoms: 'Increased thirst, frequent urination, fatigue.',
+    Causes: 'Insulin resistance, obesity, genetics.',
+    Treatment: 'Diet control, insulin therapy, exercise.'
+  },
+  'Hypertension': {
+    Symptoms: 'Often none, but may include headaches or dizziness.',
+    Causes: 'Obesity, stress, high salt intake.',
+    Treatment: 'Exercise, low-salt diet, medication.'
+  },
+  'None': {
+    Symptoms: 'No symptoms.',
+    Causes: 'No causes.',
+    Treatment: 'No treatment needed.'
+  }
+};
+
+function predictDisease(data) {
+  let scores = {
+    'Heart Disease': 0,
+    'Diabetes': 0,
+    'Hypertension': 0
+  };
+
+  // Age
+  if (data.age > 50) {
+    scores['Heart Disease'] += 2;
+    scores['Hypertension'] += 2;
+  }
+  if (data.age > 40) {
+    scores['Diabetes'] += 1;
+  }
+
+  // Blood pressure
+  if (data.blood_pressure > 140) {
+    scores['Heart Disease'] += 3;
+    scores['Hypertension'] += 4;
+  } else if (data.blood_pressure > 130) {
+    scores['Hypertension'] += 2;
+  }
+
+  // Cholesterol
+  if (data.cholesterol > 200) {
+    scores['Heart Disease'] += 3;
+  }
+
+  // Glucose
+  if (data.glucose > 150) {
+    scores['Diabetes'] += 4;
+  } else if (data.glucose > 120) {
+    scores['Diabetes'] += 2;
+  }
+
+  // BMI
+  if (data.bmi > 30) {
+    scores['Diabetes'] += 3;
+    scores['Heart Disease'] += 1;
+  }
+
+  // Smoking
+  if (data.smoking === 'yes') {
+    scores['Heart Disease'] += 2;
+    scores['Hypertension'] += 2;
+  }
+
+  // Family history
+  if (data.family_history === 'yes') {
+    scores['Heart Disease'] += 2;
+    scores['Diabetes'] += 2;
+    scores['Hypertension'] += 2;
+  }
+
+  // Physical activity
+  if (data.physical_activity === 'low') {
+    scores['Heart Disease'] += 2;
+    scores['Diabetes'] += 2;
+    scores['Hypertension'] += 2;
+  } else if (data.physical_activity === 'moderate') {
+    scores['Heart Disease'] += 1;
+    scores['Hypertension'] += 1;
+  }
+
+  const top = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  return top[0][1] === 0 ? 'None' : top[0][0];
+}
+
+document.getElementById("predictForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const data = Object.fromEntries(formData.entries());
+
+  ['age', 'blood_pressure', 'cholesterol', 'glucose', 'bmi'].forEach(key => {
+    data[key] = parseFloat(data[key]);
+  });
+
+  const prediction = predictDisease(data);
+  const info = diseaseInfo[prediction];
+
+  const modalBody = document.getElementById("modalBody");
+  modalBody.innerHTML = `
+    <h4>Predicted Disease: ${prediction}</h4>
+    <p><strong>Symptoms:</strong> ${info.Symptoms}</p>
+    <p><strong>Causes:</strong> ${info.Causes}</p>
+    <p><strong>Treatment:</strong> ${info.Treatment}</p>
+  `;
+
+  const modal = document.getElementById("infoModal");
+  modal.classList.add("show");
+});
+
+document.getElementById("closeModal").onclick = function () {
+  document.getElementById("infoModal").classList.remove("show");
+};
+
+window.onclick = function (event) {
+  const modal = document.getElementById("infoModal");
+  if (event.target === modal) {
+    modal.classList.remove("show");
+  }
+};
+</script>
+
+</body>
+</html>
